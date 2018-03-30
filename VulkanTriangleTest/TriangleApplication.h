@@ -19,11 +19,13 @@ public:
 private:
 
 	GLFWwindow* window;
+	VkInstance instance;
 
-	void InitializeWindow();				//Initialize GLFW and create a window
-	void InitializeVulkan();				//Initialize the private objects for the vulkan triangle class
-	void MainLoop();						//The main function loop that handles rendering and iterates till the window is closed
-	void CleanUp();							//Resource deallocation
+	void InitializeWindow();				
+	void CreateInstance();		
+	void InitializeVulkan();				
+	void MainLoop();						
+	void CleanUp();							
 
 };
 
