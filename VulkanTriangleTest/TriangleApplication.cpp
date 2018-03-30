@@ -148,11 +148,58 @@ void TriangleApplication::SetUpDebugCallBack()
 	}
 }
 
+void TriangleApplication::SelectPhysicalDevice()
+{
+	uint32_t deviceCount = 0;
+	vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
+
+	if (deviceCount == 0)
+	{
+		throw std::runtime_error("Failed to find GPU with Vulkan support");
+	}
+		
+	std::vector<VkPhysicalDevice> devices(deviceCount);
+	vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
+
+	//Checks for a suitable device and assigns it to the physicaldevice
+	for (const auto& device : devices)
+	{
+		if (isDeviceSuitable(device))
+		{
+			physicalDevice = device;
+			break;
+		}
+	}
+
+	if (physicalDevice == VK_NULL_HANDLE)
+		throw std::runtime_error("failed to find suitable GPU");
+
+}
+
+//Evaluates the suitability of the device
+bool TriangleApplication::isDeviceSuitable(VkPhysicalDevice device)
+{
+	VkPhysicalDeviceProperties deviceProperties;
+	VkPhysicalDeviceFeatures deviceFeatures;
+
+	vkGetPhysicalDeviceProperties(device, &deviceProperties);
+	vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
+
+	//Check whether graphics card supports geometric shaders
+	return deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU && deviceFeatures.geometryShader;
+
+	
+}
+
+
 void TriangleApplication::InitializeVulkan()
 {
 	//Create a connection between your application and Vulkan library.
 	CreateInstance();
 	SetUpDebugCallBack();
+
+	//Selects a graphics card that supports the features we need.
+	SelectPhysicalDevice();
 }
 
 void TriangleApplication::MainLoop()

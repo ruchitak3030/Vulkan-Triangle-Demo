@@ -47,17 +47,28 @@ public:
 
 private:
 
+	//GLFW stuff
 	GLFWwindow* window;
 
+	//Instance stuff
 	VkInstance instance;
 	VkDebugReportCallbackEXT callback;
 
-	void InitializeWindow();				
-	void CreateInstance();	
+	//Physical Device Stuff
+	VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
 
+	//GLFW related functions
+	void InitializeWindow();				
+	
+	//Instance related functions
+	void CreateInstance();	
 	bool CheckValidationLayerSupport();
 	std::vector<const char*> GetRequiredExtensions();
 	void SetUpDebugCallBack();
+
+	//Physical Device related functions
+	void SelectPhysicalDevice();
+	bool isDeviceSuitable(VkPhysicalDevice device);
 
 	void InitializeVulkan();				
 	void MainLoop();						
