@@ -37,6 +37,15 @@ void DestroyDebugReportCallbackEXT(VkInstance instance, VkDebugReportCallbackEXT
 	}
 }
 
+struct QueueFamilyIndices
+{
+	int graphicsFamily = -1;
+	bool isComplete()
+	{
+		return graphicsFamily >= 0;
+	}
+};
+
 
 class TriangleApplication
 {
@@ -69,6 +78,9 @@ private:
 	//Physical Device related functions
 	void SelectPhysicalDevice();
 	bool isDeviceSuitable(VkPhysicalDevice device);
+
+	//Queue Families stuff
+	QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device);
 
 	void InitializeVulkan();				
 	void MainLoop();						

@@ -179,18 +179,50 @@ void TriangleApplication::SelectPhysicalDevice()
 //Evaluates the suitability of the device
 bool TriangleApplication::isDeviceSuitable(VkPhysicalDevice device)
 {
-	VkPhysicalDeviceProperties deviceProperties;
-	VkPhysicalDeviceFeatures deviceFeatures;
 
-	vkGetPhysicalDeviceProperties(device, &deviceProperties);
-	vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
+	//VkPhysicalDeviceProperties deviceProperties;
+	//VkPhysicalDeviceFeatures deviceFeatures;
 
-	//Check whether graphics card supports geometric shaders
-	return deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU && deviceFeatures.geometryShader;
+	//vkGetPhysicalDeviceProperties(device, &deviceProperties);
+	//vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
+
+	////Check whether graphics card supports geometric shaders
+	//return deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU && deviceFeatures.geometryShader;
+
+	//Checks for devices with suitable queue families supported
+	QueueFamilyIndices indices = FindQueueFamilies(device);
+	return indices.isComplete();
 
 	
 }
 
+//Find QueueFamilies supported by the device that support graphics commands
+QueueFamilyIndices TriangleApplication::FindQueueFamilies(VkPhysicalDevice device)
+{
+	QueueFamilyIndices indices;
+
+	uint32_t queueFamilyCount = 0;
+	vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
+
+	std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
+	vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
+
+	int i = 0;
+	for (const auto& queueFamily : queueFamilies)
+	{
+		if (queueFamily.queueCount > 0 && queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
+		{
+			indices.graphicsFamily = i;
+		}
+		if (indices.isComplete())
+			break;
+
+		i++;
+	}
+
+
+	return indices;
+}
 
 void TriangleApplication::InitializeVulkan()
 {
