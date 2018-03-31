@@ -1,4 +1,5 @@
 #include "TriangleApplication.h"
+#include <set>
 
 
 
@@ -148,6 +149,15 @@ void TriangleApplication::SetUpDebugCallBack()
 	}
 }
 
+void TriangleApplication::CreateSurface()
+{
+	if (glfwCreateWindowSurface(instance, window, nullptr, &surface) != VK_SUCCESS)
+	{
+		throw std::runtime_error("Failed to create a window surface");
+	}
+
+}
+
 void TriangleApplication::SelectPhysicalDevice()
 {
 	uint32_t deviceCount = 0;
@@ -196,7 +206,7 @@ bool TriangleApplication::isDeviceSuitable(VkPhysicalDevice device)
 	
 }
 
-//Find QueueFamilies supported by the device that support graphics commands
+//Find QueueFamilies supported by the device that supports the features we need
 QueueFamilyIndices TriangleApplication::FindQueueFamilies(VkPhysicalDevice device)
 {
 	QueueFamilyIndices indices;
@@ -208,12 +218,22 @@ QueueFamilyIndices TriangleApplication::FindQueueFamilies(VkPhysicalDevice devic
 	vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
 
 	int i = 0;
+
+	//Checks whether the queue families supported by physical device supports graphics
 	for (const auto& queueFamily : queueFamilies)
 	{
 		if (queueFamily.queueCount > 0 && queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
 		{
 			indices.graphicsFamily = i;
 		}
+
+		//Checks whether the queue families supported by physical device supports window surface for rendering things
+		VkBool32 presentSupport = false;
+		vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentSupport);
+
+		if (queueFamily.queueCount > 0 && presentSupport)
+			indices.presentFamily = i;
+
 		if (indices.isComplete())
 			break;
 
@@ -229,49 +249,95 @@ void TriangleApplication::CreateLogicalDevice()
 	//Describes the number of queues you want in your queue family
 	QueueFamilyIndices indices = FindQueueFamilies(physicalDevice);
 
-	VkDeviceQueueCreateInfo queueInfo = {};
-	queueInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-	queueInfo.queueFamilyIndex = indices.graphicsFamily;
-	queueInfo.queueCount = 1;
+	std::vector<VkDeviceQueueCreateInfo> queueInfos;
+	std::set<int> uniqueQueueFamilies = { indices.graphicsFamily, indices.presentFamily };
 
 	float queuePriority = 1.0f;
-	queueInfo.pQueuePriorities = &queuePriority;
 
-	//Describe the set of device features we will need.
+	for (int queuFamily : uniqueQueueFamilies)
+	{
+		//Get the number of queue in the queue family
+		VkDeviceQueueCreateInfo queueInfo = {};
+		queueInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+		queueInfo.queueFamilyIndex = queuFamily;
+		queueInfo.queueCount = 1;
+		queueInfo.pQueuePriorities = &queuePriority;
+		queueInfos.push_back(queueInfo);
+	}
+
+	//Get the device features 
 	VkPhysicalDeviceFeatures deviceFeatures = {};
 
-	//Create thge logical device
+	//Create logical device
 	VkDeviceCreateInfo createInfo = {};
 	createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 
-	//reference to the number of queues in a queue family
-	createInfo.pQueueCreateInfos = &queueInfo;
-	createInfo.queueCreateInfoCount = 1;
+	createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueInfos.size());
+	createInfo.pQueueCreateInfos = queueInfos.data();
 
-	//reference to the features supported by the device
 	createInfo.pEnabledFeatures = &deviceFeatures;
 
-	//extensions
 	createInfo.enabledExtensionCount = 0;
-	
-	//validation layers
+
+
 	if (enableValidationLayers)
 	{
 		createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
 		createInfo.ppEnabledLayerNames = validationLayers.data();
 	}
+
 	else
 	{
 		createInfo.enabledLayerCount = 0;
 	}
 
 	if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS)
-	{
 		throw std::runtime_error("Failed to create logical device");
-	}
+
+	//VkDeviceQueueCreateInfo queueInfo = {};
+	//queueInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+	//queueInfo.queueFamilyIndex = indices.graphicsFamily;
+	//queueInfo.queueCount = 1;
+
+	//float queuePriority = 1.0f;
+	//queueInfo.pQueuePriorities = &queuePriority;
+
+	////Describe the set of device features we will need.
+	//VkPhysicalDeviceFeatures deviceFeatures = {};
+
+	////Create thge logical device
+	//VkDeviceCreateInfo createInfo = {};
+	//createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+
+	////reference to the number of queues in a queue family
+	//createInfo.pQueueCreateInfos = &queueInfo;
+	//createInfo.queueCreateInfoCount = 1;
+
+	////reference to the features supported by the device
+	//createInfo.pEnabledFeatures = &deviceFeatures;
+
+	////extensions
+	//createInfo.enabledExtensionCount = 0;
+	//
+	////validation layers
+	//if (enableValidationLayers)
+	//{
+	//	createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
+	//	createInfo.ppEnabledLayerNames = validationLayers.data();
+	//}
+	//else
+	//{
+	//	createInfo.enabledLayerCount = 0;
+	//}
+
+	//if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS)
+	//{
+	//	throw std::runtime_error("Failed to create logical device");
+	//}
 
 	//Create queue handles
 	vkGetDeviceQueue(device, indices.graphicsFamily, 0, &graphicsQueue);
+	vkGetDeviceQueue(device, indices.presentFamily, 0, &presentQueue);
 
 }
 
@@ -280,6 +346,9 @@ void TriangleApplication::InitializeVulkan()
 	//Create a connection between your application and Vulkan library.
 	CreateInstance();
 	SetUpDebugCallBack();
+
+	//Create a window surface that is used to render things on the screen. Created a connection between Vulkan and window system
+	CreateSurface();
 
 	//Selects a graphics card that supports the features we need.
 	SelectPhysicalDevice();
@@ -304,6 +373,7 @@ void TriangleApplication::CleanUp()
 	if (enableValidationLayers)
 		DestroyDebugReportCallbackEXT(instance, callback, nullptr);
 
+	vkDestroySurfaceKHR(instance, surface, nullptr);
 	vkDestroyInstance(instance, nullptr);
 
 	glfwDestroyWindow(window);

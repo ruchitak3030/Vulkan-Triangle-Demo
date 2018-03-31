@@ -40,9 +40,10 @@ void DestroyDebugReportCallbackEXT(VkInstance instance, VkDebugReportCallbackEXT
 struct QueueFamilyIndices
 {
 	int graphicsFamily = -1;
+	int presentFamily = -1;
 	bool isComplete()
 	{
-		return graphicsFamily >= 0;
+		return graphicsFamily >= 0 && presentFamily >= 0;
 	}
 };
 
@@ -63,6 +64,9 @@ private:
 	VkInstance instance;
 	VkDebugReportCallbackEXT callback;
 
+	//Window Surface creation stuff
+	VkSurfaceKHR surface;
+
 	//Physical Device Stuff
 	VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
 
@@ -71,6 +75,7 @@ private:
 
 	//Queue stuff
 	VkQueue graphicsQueue;
+	VkQueue presentQueue;
 
 
 	//GLFW related functions
@@ -81,6 +86,9 @@ private:
 	bool CheckValidationLayerSupport();
 	std::vector<const char*> GetRequiredExtensions();
 	void SetUpDebugCallBack();
+
+	//Window Surface creation related function
+	void CreateSurface();
 
 	//Physical Device related functions
 	void SelectPhysicalDevice();
