@@ -224,6 +224,57 @@ QueueFamilyIndices TriangleApplication::FindQueueFamilies(VkPhysicalDevice devic
 	return indices;
 }
 
+void TriangleApplication::CreateLogicalDevice()
+{
+	//Describes the number of queues you want in your queue family
+	QueueFamilyIndices indices = FindQueueFamilies(physicalDevice);
+
+	VkDeviceQueueCreateInfo queueInfo = {};
+	queueInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+	queueInfo.queueFamilyIndex = indices.graphicsFamily;
+	queueInfo.queueCount = 1;
+
+	float queuePriority = 1.0f;
+	queueInfo.pQueuePriorities = &queuePriority;
+
+	//Describe the set of device features we will need.
+	VkPhysicalDeviceFeatures deviceFeatures = {};
+
+	//Create thge logical device
+	VkDeviceCreateInfo createInfo = {};
+	createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+
+	//reference to the number of queues in a queue family
+	createInfo.pQueueCreateInfos = &queueInfo;
+	createInfo.queueCreateInfoCount = 1;
+
+	//reference to the features supported by the device
+	createInfo.pEnabledFeatures = &deviceFeatures;
+
+	//extensions
+	createInfo.enabledExtensionCount = 0;
+	
+	//validation layers
+	if (enableValidationLayers)
+	{
+		createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
+		createInfo.ppEnabledLayerNames = validationLayers.data();
+	}
+	else
+	{
+		createInfo.enabledLayerCount = 0;
+	}
+
+	if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS)
+	{
+		throw std::runtime_error("Failed to create logical device");
+	}
+
+	//Create queue handles
+	vkGetDeviceQueue(device, indices.graphicsFamily, 0, &graphicsQueue);
+
+}
+
 void TriangleApplication::InitializeVulkan()
 {
 	//Create a connection between your application and Vulkan library.
@@ -232,6 +283,9 @@ void TriangleApplication::InitializeVulkan()
 
 	//Selects a graphics card that supports the features we need.
 	SelectPhysicalDevice();
+
+	//Creates a logical device that interfaces with the Physical device
+	CreateLogicalDevice();
 }
 
 void TriangleApplication::MainLoop()
@@ -244,6 +298,8 @@ void TriangleApplication::MainLoop()
 
 void TriangleApplication::CleanUp()
 {
+
+	vkDestroyDevice(device, nullptr);
 
 	if (enableValidationLayers)
 		DestroyDebugReportCallbackEXT(instance, callback, nullptr);

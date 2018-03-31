@@ -66,6 +66,13 @@ private:
 	//Physical Device Stuff
 	VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
 
+	//Logical Device stuff
+	VkDevice device;
+
+	//Queue stuff
+	VkQueue graphicsQueue;
+
+
 	//GLFW related functions
 	void InitializeWindow();				
 	
@@ -81,6 +88,11 @@ private:
 
 	//Queue Families stuff
 	QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device);
+
+	//Logical Device related functions
+	void CreateLogicalDevice();
+
+	
 
 	void InitializeVulkan();				
 	void MainLoop();						
