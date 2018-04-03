@@ -11,6 +11,7 @@ const int WIDTH = 800;
 const int HEIGHT = 600;
 
 const std::vector<const char*> validationLayers = { "VK_LAYER_LUNARG_standard_validation" };
+const std::vector<const char*> deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 
 #ifndef NDEBUG
 const bool enableValidationLayers = false;
@@ -47,6 +48,13 @@ struct QueueFamilyIndices
 	}
 };
 
+struct SwapChainSupportDetails
+{
+	VkSurfaceCapabilitiesKHR capabilities;
+	std::vector<VkSurfaceFormatKHR> formats;
+	std::vector<VkPresentModeKHR> presentModes;
+};
+
 
 class TriangleApplication
 {
@@ -77,6 +85,11 @@ private:
 	VkQueue graphicsQueue;
 	VkQueue presentQueue;
 
+	//Swap Chain stuff
+	VkSwapchainKHR swapChain;
+	std::vector<VkImage> swapChainImages;
+	VkFormat swapChainImageFormat;
+	VkExtent2D swapChainExtent;
 
 	//GLFW related functions
 	void InitializeWindow();				
@@ -99,6 +112,14 @@ private:
 
 	//Logical Device related functions
 	void CreateLogicalDevice();
+
+	//Swap chain creation related functions
+	bool CheckDeviceExtensionSupport(VkPhysicalDevice device);
+	SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice device);
+	VkSurfaceFormatKHR ChooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
+	VkPresentModeKHR ChooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes); 
+	VkExtent2D ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
+	void CreateSwapChain();
 
 	
 
