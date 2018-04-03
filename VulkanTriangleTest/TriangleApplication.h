@@ -91,6 +91,9 @@ private:
 	VkFormat swapChainImageFormat;
 	VkExtent2D swapChainExtent;
 
+	//Image View stuff
+	std::vector<VkImageView> swapChainImageViews;
+
 	//GLFW related functions
 	void InitializeWindow();				
 	
@@ -121,7 +124,8 @@ private:
 	VkExtent2D ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
 	void CreateSwapChain();
 
-	
+	//Image View related functions
+	void CreateImageView();
 
 	void InitializeVulkan();				
 	void MainLoop();						

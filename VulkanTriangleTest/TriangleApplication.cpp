@@ -526,9 +526,42 @@ void TriangleApplication::CreateSwapChain()
 	swapChainImages.resize(imageCount);
 	vkGetSwapchainImagesKHR(device, swapChain, &imageCount, swapChainImages.data());
 
-
 	swapChainImageFormat = surfaceFormat.format;
 	swapChainExtent = extent;
+}
+
+
+void TriangleApplication::CreateImageView()
+{
+
+	swapChainImageViews.resize(swapChainImages.size());
+
+	for (size_t i = 0; i < swapChainImages.size(); i++)
+	{
+		VkImageViewCreateInfo imageViewInfo = {};
+		imageViewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		imageViewInfo.image = swapChainImages[i];
+		imageViewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+		imageViewInfo.format = swapChainImageFormat;
+
+		imageViewInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+		imageViewInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+		imageViewInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+		imageViewInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+
+		imageViewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		imageViewInfo.subresourceRange.baseMipLevel = 0;
+		imageViewInfo.subresourceRange.levelCount = 1;
+		imageViewInfo.subresourceRange.baseArrayLayer = 0;
+		imageViewInfo.subresourceRange.layerCount = 1;
+
+		if (vkCreateImageView(device, &imageViewInfo, nullptr, &swapChainImageViews[i]) != VK_SUCCESS) 
+		{
+			throw std::runtime_error("failed to create image views!");
+		}
+
+
+	}
 }
 
 void TriangleApplication::InitializeVulkan()
@@ -548,6 +581,9 @@ void TriangleApplication::InitializeVulkan()
 
 	//Creates Swap Chain that handles the queue of images that are waiting to be rendered on the screen
 	CreateSwapChain();
+
+	//Use to view an image. Specifies how to access an image and what part of the image should be accessed
+	CreateImageView();
 }
 
 void TriangleApplication::MainLoop()
@@ -560,6 +596,11 @@ void TriangleApplication::MainLoop()
 
 void TriangleApplication::CleanUp()
 {
+	for (auto imageView : swapChainImageViews)
+	{
+		vkDestroyImageView(device, imageView, nullptr);
+	}
+
 	vkDestroySwapchainKHR(device, swapChain, nullptr);
 
 	vkDestroyDevice(device, nullptr);
