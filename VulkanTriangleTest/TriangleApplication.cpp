@@ -1,6 +1,7 @@
 #include "TriangleApplication.h"
 #include <set>
 #include <algorithm>
+#include <fstream>
 
 
 TriangleApplication::TriangleApplication()
@@ -564,6 +565,55 @@ void TriangleApplication::CreateImageView()
 	}
 }
 
+void TriangleApplication::CreateGraphicsPipeline()
+{
+	VkShaderModule vertShaderModule;
+	VkShaderModule fragShaderModule;
+
+	//call the readFile() to load the bytecode of the two shader files
+	auto vertShaderCode = readFile("Shaders/shader.vert");
+	auto fragShaderCode = readFile("Shaders/shaders.frag");
+
+	//Create the shader module to wrap the shaders before passing them to the pipeline
+	vertShaderModule = CreateShaderModule(vertShaderCode);
+	fragShaderModule = CreateShaderModule(fragShaderCode);
+
+	//Creates the shader int the pipeline
+	VkPipelineShaderStageCreateInfo vertShaderInfo;
+	vertShaderInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	vertShaderInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
+	vertShaderInfo.module = vertShaderModule;
+	vertShaderInfo.pName = "main";
+
+	VkPipelineShaderStageCreateInfo fragShaderInfo;
+	fragShaderInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;;
+	fragShaderInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+	fragShaderInfo.module = fragShaderModule;
+	fragShaderInfo.pName = "main";
+
+	VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderInfo, fragShaderInfo };
+
+	//Delete the modules	
+	vkDestroyShaderModule(device, fragShaderModule, nullptr);
+	vkDestroyShaderModule(device, vertShaderModule, nullptr);
+}
+
+VkShaderModule TriangleApplication::CreateShaderModule(std::vector<char>& code)
+{
+	VkShaderModuleCreateInfo shaderModuleInfo;
+	shaderModuleInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+	shaderModuleInfo.codeSize = code.size();
+	shaderModuleInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
+
+	VkShaderModule shaderModule;
+	if (vkCreateShaderModule(device, &shaderModuleInfo, nullptr, &shaderModule) != VK_SUCCESS)
+	{
+		throw std::runtime_error("failed to create a shader module");
+	}
+
+	return shaderModule;
+}
+
 void TriangleApplication::InitializeVulkan()
 {
 	//Create a connection between your application and Vulkan library.
@@ -584,6 +634,9 @@ void TriangleApplication::InitializeVulkan()
 
 	//Use to view an image. Specifies how to access an image and what part of the image should be accessed
 	CreateImageView();
+
+	//Creates the Graphics Pipeline
+	CreateGraphicsPipeline();
 }
 
 void TriangleApplication::MainLoop()
@@ -600,7 +653,7 @@ void TriangleApplication::CleanUp()
 	{
 		vkDestroyImageView(device, imageView, nullptr);
 	}
-
+ 
 	vkDestroySwapchainKHR(device, swapChain, nullptr);
 
 	vkDestroyDevice(device, nullptr);
@@ -620,6 +673,27 @@ VKAPI_ATTR VkBool32 VKAPI_CALL TriangleApplication::debugCallback(VkDebugReportF
 	std::cerr << "validation layer: " << msg << std::endl;
 
 	return VK_FALSE;
+}
+
+std::vector<char> TriangleApplication::readFile(const std::string & filename)
+{
+	std::ifstream file(filename, std::ios::ate | std::ios::binary);
+	
+	if (!file.is_open())
+	{
+		throw std::runtime_error("failed to load file");
+	}
+
+	//gets the size of the file, and creates a vector for storing the contents
+	size_t fileSize = (size_t)file.tellg();
+	std::vector<char> buffer(fileSize);
+
+	//We seek back to begining of the file and start reading the file in buffer
+	file.seekg(0);
+	file.read(buffer.data(), fileSize);
+	file.close();
+
+	return buffer;
 }
 
 

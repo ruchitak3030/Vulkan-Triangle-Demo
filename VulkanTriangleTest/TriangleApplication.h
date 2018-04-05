@@ -127,11 +127,17 @@ private:
 	//Image View related functions
 	void CreateImageView();
 
+	//Graphics Pipeline
+	void CreateGraphicsPipeline();
+	VkShaderModule CreateShaderModule(std::vector<char>& code);
+
 	void InitializeVulkan();				
 	void MainLoop();						
 	void CleanUp();
 
 	static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objType, uint64_t obj, size_t location, int32_t code, const char* layerPrefix, const char* msg, void* userData);
 
+	//Function to load binary data from files
+	static std::vector<char> readFile(const std::string& filename);
 };
 
