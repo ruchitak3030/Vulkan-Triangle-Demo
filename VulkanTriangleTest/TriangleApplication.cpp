@@ -110,7 +110,6 @@ bool TriangleApplication::CheckValidationLayerSupport()
 		if (!layerFound)
 			return false;
 	}
-		
 
 
 	return true;
@@ -567,16 +566,13 @@ void TriangleApplication::CreateImageView()
 
 void TriangleApplication::CreateGraphicsPipeline()
 {
-	VkShaderModule vertShaderModule;
-	VkShaderModule fragShaderModule;
-
 	//call the readFile() to load the bytecode of the two shader files
 	auto vertShaderCode = readFile("Shaders/shader.vert");
 	auto fragShaderCode = readFile("Shaders/shaders.frag");
 
 	//Create the shader module to wrap the shaders before passing them to the pipeline
-	vertShaderModule = CreateShaderModule(vertShaderCode);
-	fragShaderModule = CreateShaderModule(fragShaderCode);
+	VkShaderModule vertShaderModule = CreateShaderModule(vertShaderCode);
+	VkShaderModule fragShaderModule = CreateShaderModule(fragShaderCode);
 
 	//Creates the shader int the pipeline
 	VkPipelineShaderStageCreateInfo vertShaderInfo = {};
@@ -597,9 +593,9 @@ void TriangleApplication::CreateGraphicsPipeline()
 	VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
 	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 	vertexInputInfo.vertexBindingDescriptionCount = 0;
-	vertexInputInfo.pVertexBindingDescriptions = nullptr;
+	//vertexInputInfo.pVertexBindingDescriptions = nullptr;
 	vertexInputInfo.vertexAttributeDescriptionCount = 0;
-	vertexInputInfo.pVertexAttributeDescriptions = nullptr;
+	//vertexInputInfo.pVertexAttributeDescriptions = nullptr;
 
 	//Input Assembly - specifies the primitives
 	VkPipelineInputAssemblyStateCreateInfo inputAssemblyInfo;
@@ -648,21 +644,21 @@ void TriangleApplication::CreateGraphicsPipeline()
 	multiSampleInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
 	multiSampleInfo.sampleShadingEnable = VK_FALSE;
 	multiSampleInfo.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
-	multiSampleInfo.minSampleShading = 1.0f;
-	multiSampleInfo.pSampleMask = nullptr;
-	multiSampleInfo.alphaToCoverageEnable = VK_FALSE;
-	multiSampleInfo.alphaToOneEnable = VK_FALSE;
+	//multiSampleInfo.minSampleShading = 1.0f;
+	//multiSampleInfo.pSampleMask = nullptr;
+	//multiSampleInfo.alphaToCoverageEnable = VK_FALSE;
+	//multiSampleInfo.alphaToOneEnable = VK_FALSE;
 
 	//Color blending - after the fragment shader returns the color it needs to be combined with the old color.
 	VkPipelineColorBlendAttachmentState colorBlendAttachmentInfo = {};
 	colorBlendAttachmentInfo.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
 	colorBlendAttachmentInfo.blendEnable = VK_FALSE;
-	colorBlendAttachmentInfo.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
-	colorBlendAttachmentInfo.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
-	colorBlendAttachmentInfo.colorBlendOp = VK_BLEND_OP_ADD;
-	colorBlendAttachmentInfo.srcAlphaBlendFactor - VK_BLEND_FACTOR_ONE;
-	colorBlendAttachmentInfo.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
-	colorBlendAttachmentInfo.alphaBlendOp = VK_BLEND_OP_ADD;
+	//colorBlendAttachmentInfo.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
+	//colorBlendAttachmentInfo.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
+	//colorBlendAttachmentInfo.colorBlendOp = VK_BLEND_OP_ADD;
+	//colorBlendAttachmentInfo.srcAlphaBlendFactor - VK_BLEND_FACTOR_ONE;
+	//colorBlendAttachmentInfo.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+	//colorBlendAttachmentInfo.alphaBlendOp = VK_BLEND_OP_ADD;
 
 	VkPipelineColorBlendStateCreateInfo colorBlendInfo = {};
 	colorBlendInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
@@ -679,14 +675,36 @@ void TriangleApplication::CreateGraphicsPipeline()
 	VkPipelineLayoutCreateInfo layoutInfo = {};
 	layoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 	layoutInfo.setLayoutCount = 0;
-	layoutInfo.pSetLayouts = nullptr;
+	//layoutInfo.pSetLayouts = nullptr;
 	layoutInfo.pushConstantRangeCount = 0;
-	layoutInfo.pPushConstantRanges = nullptr;
+	//layoutInfo.pPushConstantRanges = nullptr;
 
 	if (vkCreatePipelineLayout(device, &layoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS)
 	{
 		throw std::runtime_error("failed to create pipeline layout");
 	}
+
+	//Create Graphics pipeline
+	VkGraphicsPipelineCreateInfo graphicsPipelineInfo = {};
+	graphicsPipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+	graphicsPipelineInfo.stageCount = 2;
+	graphicsPipelineInfo.pStages = shaderStages;
+	graphicsPipelineInfo.pVertexInputState = &vertexInputInfo;
+	graphicsPipelineInfo.pInputAssemblyState = &inputAssemblyInfo;
+	graphicsPipelineInfo.pViewportState = &viewportInfo;
+	graphicsPipelineInfo.pRasterizationState = &rasterizerInfo;
+	graphicsPipelineInfo.pMultisampleState = &multiSampleInfo;
+	graphicsPipelineInfo.pColorBlendState = &colorBlendInfo;
+	graphicsPipelineInfo.layout = pipelineLayout;
+	graphicsPipelineInfo.renderPass = renderPass;
+	graphicsPipelineInfo.subpass = 0;
+	graphicsPipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
+
+	if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &graphicsPipelineInfo, nullptr, &graphicsPipelines) != VK_SUCCESS)
+	{
+		throw std::runtime_error("failed to create Graphics Pipeline");
+	}
+
 	//Delete the modules	
 	vkDestroyShaderModule(device, fragShaderModule, nullptr);
 	vkDestroyShaderModule(device, vertShaderModule, nullptr);
@@ -706,6 +724,43 @@ VkShaderModule TriangleApplication::CreateShaderModule(std::vector<char>& code)
 	}
 
 	return shaderModule;
+}
+
+void TriangleApplication::CreateRenderPass()
+{
+	VkAttachmentDescription colorAttachment = {};
+	colorAttachment.format = swapChainImageFormat;
+	colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+	//Subpass - subsequent rendering operations that depend on the content of framebuffers in previous passes
+	VkAttachmentReference colorAttachmentRef = {};
+	colorAttachmentRef.attachment = 0;
+	colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+	VkSubpassDescription subPassInfo = {};
+	subPassInfo.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+	subPassInfo.colorAttachmentCount = 1;
+	subPassInfo.pColorAttachments = &colorAttachmentRef;
+
+	//Create render pass
+	VkRenderPassCreateInfo renderPassInfo = {};
+	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+	renderPassInfo.attachmentCount = 1;
+	renderPassInfo.pAttachments = &colorAttachment;
+	renderPassInfo.subpassCount = 1;
+	renderPassInfo.pSubpasses = &subPassInfo;
+
+	if (vkCreateRenderPass(device, &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS)
+	{
+		throw std::runtime_error("Failed to create render pass");
+	}
+
 }
 
 void TriangleApplication::InitializeVulkan()
@@ -729,6 +784,10 @@ void TriangleApplication::InitializeVulkan()
 	//Use to view an image. Specifies how to access an image and what part of the image should be accessed
 	CreateImageView();
 
+	//Tells the Vulkan about the framebuffer attachments that will be used while rendering.
+	//Specifies how many depth and color buffers, how many samples to handle each and how their contents should be handled
+	CreateRenderPass();
+
 	//Creates the Graphics Pipeline
 	CreateGraphicsPipeline();
 }
@@ -743,7 +802,11 @@ void TriangleApplication::MainLoop()
 
 void TriangleApplication::CleanUp()
 {
+	vkDestroyPipeline(device, graphicsPipelines, nullptr);
+
 	vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
+
+	vkDestroyRenderPass(device, renderPass, nullptr);
 
 	for (auto imageView : swapChainImageViews)
 	{

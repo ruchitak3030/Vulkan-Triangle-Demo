@@ -94,8 +94,12 @@ private:
 	//Image View stuff
 	std::vector<VkImageView> swapChainImageViews;
 
+	//Render Pass stuff
+	VkRenderPass renderPass;
+
 	//Graphics Pipeline stuff
 	VkPipelineLayout pipelineLayout;
+	VkPipeline graphicsPipelines;
 
 	//GLFW related functions
 	void InitializeWindow();				
@@ -133,6 +137,9 @@ private:
 	//Graphics Pipeline
 	void CreateGraphicsPipeline();
 	VkShaderModule CreateShaderModule(std::vector<char>& code);
+
+	//Render pass
+	void CreateRenderPass();
 
 	void InitializeVulkan();				
 	void MainLoop();						
