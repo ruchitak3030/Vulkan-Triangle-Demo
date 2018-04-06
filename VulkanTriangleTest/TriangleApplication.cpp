@@ -642,7 +642,51 @@ void TriangleApplication::CreateGraphicsPipeline()
 	rasterizerInfo.depthBiasClamp = 0.0f;
 	rasterizerInfo.depthBiasSlopeFactor = 0.0f;
 
+	//Multisampling - Performs anti-aliasing.
+	//Combines the fragment shader output that maps to the same pixel.
+	VkPipelineMultisampleStateCreateInfo multiSampleInfo = {};
+	multiSampleInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+	multiSampleInfo.sampleShadingEnable = VK_FALSE;
+	multiSampleInfo.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+	multiSampleInfo.minSampleShading = 1.0f;
+	multiSampleInfo.pSampleMask = nullptr;
+	multiSampleInfo.alphaToCoverageEnable = VK_FALSE;
+	multiSampleInfo.alphaToOneEnable = VK_FALSE;
 
+	//Color blending - after the fragment shader returns the color it needs to be combined with the old color.
+	VkPipelineColorBlendAttachmentState colorBlendAttachmentInfo = {};
+	colorBlendAttachmentInfo.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+	colorBlendAttachmentInfo.blendEnable = VK_FALSE;
+	colorBlendAttachmentInfo.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
+	colorBlendAttachmentInfo.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
+	colorBlendAttachmentInfo.colorBlendOp = VK_BLEND_OP_ADD;
+	colorBlendAttachmentInfo.srcAlphaBlendFactor - VK_BLEND_FACTOR_ONE;
+	colorBlendAttachmentInfo.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+	colorBlendAttachmentInfo.alphaBlendOp = VK_BLEND_OP_ADD;
+
+	VkPipelineColorBlendStateCreateInfo colorBlendInfo = {};
+	colorBlendInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+	colorBlendInfo.logicOpEnable = VK_FALSE;
+	colorBlendInfo.logicOp = VK_LOGIC_OP_COPY;
+	colorBlendInfo.attachmentCount = 1;
+	colorBlendInfo.pAttachments = &colorBlendAttachmentInfo;
+	colorBlendInfo.blendConstants[0] = 0.0f;
+	colorBlendInfo.blendConstants[1] = 0.0f;
+	colorBlendInfo.blendConstants[2] = 0.0f;
+	colorBlendInfo.blendConstants[3] = 0.0f;
+
+	//Pipeline layout - use to specify values that need to be passed to the shaders
+	VkPipelineLayoutCreateInfo layoutInfo = {};
+	layoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+	layoutInfo.setLayoutCount = 0;
+	layoutInfo.pSetLayouts = nullptr;
+	layoutInfo.pushConstantRangeCount = 0;
+	layoutInfo.pPushConstantRanges = nullptr;
+
+	if (vkCreatePipelineLayout(device, &layoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS)
+	{
+		throw std::runtime_error("failed to create pipeline layout");
+	}
 	//Delete the modules	
 	vkDestroyShaderModule(device, fragShaderModule, nullptr);
 	vkDestroyShaderModule(device, vertShaderModule, nullptr);
@@ -699,6 +743,8 @@ void TriangleApplication::MainLoop()
 
 void TriangleApplication::CleanUp()
 {
+	vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
+
 	for (auto imageView : swapChainImageViews)
 	{
 		vkDestroyImageView(device, imageView, nullptr);
@@ -727,6 +773,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL TriangleApplication::debugCallback(VkDebugReportF
 
 std::vector<char> TriangleApplication::readFile(const std::string & filename)
 {
+
 	std::ifstream file(filename, std::ios::ate | std::ios::binary);
 	
 	if (!file.is_open())

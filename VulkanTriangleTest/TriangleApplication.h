@@ -94,6 +94,9 @@ private:
 	//Image View stuff
 	std::vector<VkImageView> swapChainImageViews;
 
+	//Graphics Pipeline stuff
+	VkPipelineLayout pipelineLayout;
+
 	//GLFW related functions
 	void InitializeWindow();				
 	
